@@ -33,6 +33,10 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+app.post("/login", (req, res) => {
+  res.cookie("username", req.body["username"]);
+  res.redirect("/urls");
+});
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
