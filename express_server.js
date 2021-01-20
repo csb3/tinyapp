@@ -11,6 +11,19 @@ const generateRandomString = function() {
   return Math.random().toString(36).substring(2, 8);
 };
 
+const users = {
+  "userRandomID": {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur"
+  },
+  "user2RandomID": {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk"
+  }
+};
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://google.com"
@@ -38,6 +51,14 @@ app.get("/urls", (req, res) => {
 
 app.get("/register", (req, res) => {
   res.render("register");
+});
+
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  users[id] = { id: id, email: req.body.email, password: req.body.password};
+  console.log(JSON.stringify(users));
+  res.cookie("user_id", id);
+  res.redirect("/urls");
 });
 
 app.post("/login", (req, res) => {
