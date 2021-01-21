@@ -31,14 +31,11 @@ const generateRandomString = function() {
 
 const getUserByEmail = function(email) {
   for (const user in users) {
-    console.log(users[user]["email"]);
     if (email === users[user]["email"]) {
       return users[user];
     }
   }
 };
-
-console.log(getUserByEmail("user@example.com"));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -57,12 +54,21 @@ app.get("/urls", (req, res) => {
     urls: urlDatabase,
     user: users[req.cookies["user_id"]],
   };
-  console.log(templateVars);
   res.render("urls_index", templateVars);
 });
 
 app.get("/register", (req, res) => {
-  res.render("register");
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("login", templateVars);
 });
 
 app.post("/register", (req, res) => {
@@ -121,6 +127,12 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("user_id", req.body["id"]);
-  res.redirect("/urls");
+  console.log("Login req.body: ", req.body);
+  const user = getUserByEmail(req.body.email);
+  if (user && user.password === req.body.password) {
+    res.cookie("user_id", user.id);
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Unable to log in");
+  }
 });
