@@ -118,7 +118,6 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   const key = generateRandomString();
   urlDatabase[key] = { longURL: req.body.longURL, userID: req.cookies["user_id"]};
-  console.log(JSON.stringify(urlDatabase));
   res.redirect(`/urls/${key}`);
 });
 
@@ -138,8 +137,6 @@ app.get("/urls/:shortURL", (req, res) => {
     urlUserID: urlDatabase[req.params.shortURL].userID,
     user: users[req.cookies["user_id"]]
   };
-  console.log("user.id: ", templateVars.user.id);
-  console.log("shortURL.userID: ", templateVars.shortURL);
   res.render("urls_show", templateVars);
 });
 
@@ -153,7 +150,6 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log("Login req.body: ", req.body);
   const user = getUserByEmail(req.body.email);
   if (user && user.password === req.body.password) {
     res.cookie("user_id", user.id);
