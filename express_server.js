@@ -4,12 +4,15 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
+const { getUserByEmail, urlsForUser, generateRandomString } = require('./helpers');
+
+app.set("view engine", "ejs");
+
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
   name: 'userID',
   keys: ['key1', 'key2']
 }));
-app.set("view engine", "ejs");
 
 const users = {
   "userRandomID": {
@@ -29,28 +32,6 @@ const urlDatabase = {
   "9sm5xK": { longURL: "http://google.com", userID: "user2RandomID" }
 };
 
-const generateRandomString = function() {
-  return Math.random().toString(36).substring(2, 8);
-};
-
-const getUserByEmail = function(email) {
-  for (const user in users) {
-    if (email === users[user]["email"]) {
-      return users[user];
-    }
-  }
-};
-
-const urlsForUser = function(id) {
-  const urls = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url]["userID"] === id) {
-      urls[url] = urlDatabase[url];
-    }
-  }
-  return urls;
-};
-
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
@@ -65,7 +46,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const templateVars = {
-    urls: urlsForUser(req.session.userID),
+    urls: urlsForUser(req.session.userID, urlDatabase),
     user: users[req.session.userID],
   };
   res.render("urls_index", templateVars);
@@ -86,7 +67,7 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  if (!req.body.password || !req.body.email || getUserByEmail(req.body.email)) {
+  if (!req.body.password || !req.body.email || getUserByEmail(req.body.email, users)) {
     res.status(400).send("User could not be registered");
   } else {
     const id = generateRandomString();
@@ -156,7 +137,7 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const user = getUserByEmail(req.body.email);
+  const user = getUserByEmail(req.body.email, users);
   if (user && bcrypt.compareSync(req.body.password, user.password)) {
     req.session.userID = user.id;
     res.redirect("/urls");
