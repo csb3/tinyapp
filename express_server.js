@@ -7,10 +7,6 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
 app.set("view engine", "ejs");
 
-const generateRandomString = function() {
-  return Math.random().toString(36).substring(2, 8);
-};
-
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -28,6 +24,21 @@ const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://google.com"
 };
+
+const generateRandomString = function() {
+  return Math.random().toString(36).substring(2, 8);
+};
+
+const getUserByEmail = function(email) {
+  for (const user in users) {
+    console.log(users[user]["email"]);
+    if (email === users[user]["email"]) {
+      return users[user];
+    }
+  }
+};
+
+console.log(getUserByEmail("user@example.com"));
 
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -55,12 +66,15 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const id = generateRandomString();
-  users[id] = { id: id, email: req.body.email, password: req.body.password};
-  res.cookie("user_id", id);
-  res.redirect("/urls");
+  if (!req.body.password || !req.body.email || getUserByEmail(req.body.email)) {
+    res.status(400).send("User could not be registered");
+  } else {
+    const id = generateRandomString();
+    users[id] = { id: id, email: req.body.email, password: req.body.password};
+    res.cookie("user_id", id);
+    res.redirect("/urls");
+  }
 });
-
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
