@@ -62,10 +62,10 @@ app.post("/register", (req, res) => {
 });
 
 
-// app.post("/logout", (req, res) => {
-//   res.clearCookie("user_id");
-//   res.redirect("/urls");
-// });
+app.post("/logout", (req, res) => {
+  res.clearCookie("user_id");
+  res.redirect("/urls");
+});
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
