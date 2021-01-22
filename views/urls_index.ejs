@@ -13,9 +13,6 @@
 
 <body>
   <%- include('partials/_header') %>
-  <% if (!user) { %>
-    <h5>Please log in or register to continue</h5>
-  <% } else { %>
     <main style="margin: 1em;">
       <h3>My URLs</h3>
       <table class="table">
@@ -47,10 +44,9 @@
                 </form>
               </td>
             </tr>
-          <% } %>
+            <% } %>
         </tbody>
       </table>
-      <% } %>
     </main>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

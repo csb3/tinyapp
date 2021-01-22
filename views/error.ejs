@@ -4,28 +4,12 @@
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-  <title>URL - TinyApp</title>
+  <title>Error - TinyApp</title>
 </head>
 
 <body>
-  <%- include('partials/_header') %>
     <div class="card text-center">
-      <div class="card-header"></div>
-      <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %>
-        </h5>
-        <p class="card-text">Short URL: <a href="/u/<%= shortURL %>">
-            <%= shortURL %>
-          </a></p>
-      </div>
-      <div class="card-footer text-muted">
-        <h4 class="card-title">Edit</h4>
-        <form class="form-inline" method="POST" action="/urls/<%= shortURL %>" style="width: max-content; margin: auto">
-          <label for="longURL">New URL:</label><input class="form-control" type="text" name="longURL"
-            placeholder="http://" style="width: 300px; margin: 1em">
-          <button type="submit" class="btn btn-primary">Submit</button>
-        </form>
-      </div>
+      <p><%= errorMessage %></p>
     </div>
     <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

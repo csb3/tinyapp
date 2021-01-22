@@ -33,15 +33,11 @@ const urlDatabase = {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  const user = users[req.session.userID];
+  if (!user) {
+    return res.redirect("/login");
+  }
+  res.redirect('/urls');
 });
 
 app.get("/urls", (req, res) => {
@@ -49,6 +45,10 @@ app.get("/urls", (req, res) => {
     urls: urlsForUser(req.session.userID, urlDatabase),
     user: users[req.session.userID],
   };
+  if (!templateVars.user) {
+    templateVars.errorMessage = "Error - You must log in to view this page";
+    return res.render("error", templateVars);
+  }
   res.render("urls_index", templateVars);
 });
 
@@ -63,58 +63,18 @@ app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.session.userID]
   };
+  if (templateVars.user) {
+    return res.redirect('/urls');
+  }
   res.render("login", templateVars);
-});
-
-app.post("/register", (req, res) => {
-  if (!req.body.password || !req.body.email || getUserByEmail(req.body.email, users)) {
-    res.status(400).send("User could not be registered");
-  } else {
-    const id = generateRandomString();
-    const password = bcrypt.hashSync(req.body.password, 10);
-    users[id] = { id: id, email: req.body.email, password: password};
-    console.log(users);
-    req.session.userID = users[id].id;
-    res.redirect("/urls");
-  }
-});
-
-app.post("/logout", (req, res) => {
-  req.session = null;
-  res.redirect("/urls");
-});
-
-app.post("/urls/:shortURL/delete", (req, res) => {
-  if (urlDatabase[req.params.shortURL].userID === req.session.userID) {
-    delete urlDatabase[req.params.shortURL];
-    res.redirect("/urls");
-  } else {
-    res.status(401).send("401 - Unauthorized");
-  }
-});
-
-app.post("/urls/:shortURL", (req, res) => {
-  if (urlDatabase[req.params.shortURL].userID === req.session.userID) {
-    urlDatabase[req.params.shortURL].longURL = req.body.longURL;
-    res.redirect("/urls");
-  } else {
-    res.status(401).send("401 - Unauthorized");
-  }
-});
-
-app.post("/urls", (req, res) => {
-  const key = generateRandomString();
-  urlDatabase[key] = { longURL: req.body.longURL, userID: req.session.userID};
-  res.redirect(`/urls/${key}`);
 });
 
 app.get("/urls/new", (req, res) => {
   const templateVars = { user: users[req.session.userID] };
   if (!templateVars.user) {
-    res.redirect("/login");
-  } else {
-    res.render("urls_new", templateVars);
+    return res.redirect("/login");
   }
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -124,11 +84,11 @@ app.get("/urls/:shortURL", (req, res) => {
     urlUserID: urlDatabase[req.params.shortURL].userID,
     user: users[req.session.userID]
   };
+  if (urlDatabase[req.params.shortURL].userID !== req.session.userID) {
+    const errorMessage = "Error - Unauthorized";
+    return res.render("error", { errorMessage });
+  }
   res.render("urls_show", templateVars);
-});
-
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -136,12 +96,72 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(longURL);
 });
 
+app.get('*', (req, res) => {
+  const errorMessage = "Error - Page Not Found";
+  return res.render("error", { errorMessage });
+});
+
+app.post("/register", (req, res) => {
+  if (!req.body.password || !req.body.email) {
+    const errorMessage = "Error - Username and password cannot be blank";
+    return res.render("error", { errorMessage });
+  }
+  if (getUserByEmail(req.body.email, users)) {
+    const errorMessage = "Error - An account already exists for this email. Please log in to continue";
+    return res.render("error", { errorMessage });
+  }
+  const id = generateRandomString();
+  const password = bcrypt.hashSync(req.body.password, 10);
+  users[id] = { id: id, email: req.body.email, password: password};
+  console.log(users);
+  req.session.userID = users[id].id;
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  req.session = null;
+  res.redirect("/urls");
+});
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  if (urlDatabase[req.params.shortURL].userID !== req.session.userID) {
+    const errorMessage = "Error - Unauthorized";
+    return res.render("error", { errorMessage });
+  }
+  delete urlDatabase[req.params.shortURL];
+  res.redirect("/urls");
+});
+
+app.post("/urls/:shortURL", (req, res) => {
+  if (urlDatabase[req.params.shortURL].userID !== req.session.userID) {
+    const errorMessage = "Error - Unauthorized";
+    return res.render("error", { errorMessage });
+  }
+  urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+  res.redirect("/urls");
+});
+
+app.post("/urls", (req, res) => {
+  const user = users[req.session.userID];
+  if (!user) {
+    const errorMessage = "Error - Unauthorized";
+    return res.render("error", { errorMessage });
+  }
+  const key = generateRandomString();
+  urlDatabase[key] = { longURL: req.body.longURL, userID: req.session.userID };
+  res.redirect(`/urls/${key}`);
+});
+
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email, users);
-  if (user && bcrypt.compareSync(req.body.password, user.password)) {
-    req.session.userID = user.id;
-    res.redirect("/urls");
-  } else {
-    res.status(403).send("Unable to log in");
+  if (!user || !bcrypt.compareSync(req.body.password, user.password)) {
+    const errorMessage = "Error - Unable to log in. Username or password is incorrect";
+    return res.render("error", { errorMessage });
   }
+  req.session.userID = user.id;
+  res.redirect("/urls");
+});
+
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
