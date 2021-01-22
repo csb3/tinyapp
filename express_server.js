@@ -56,6 +56,9 @@ app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.session.userID]
   };
+  if (templateVars.user) {
+    return res.redirect("/urls");
+  }
   res.render("register", templateVars);
 });
 
@@ -100,6 +103,10 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    const errorMessage = "Error - Page not found";
+    return res.render("error", { errorMessage });
+  }
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
@@ -121,7 +128,6 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const password = bcrypt.hashSync(req.body.password, 10);
   users[id] = { id: id, email: req.body.email, password: password};
-  console.log(users);
   req.session.userID = users[id].id;
   res.redirect("/urls");
 });
