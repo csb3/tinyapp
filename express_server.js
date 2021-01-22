@@ -46,8 +46,8 @@ app.get("/urls", (req, res) => {
     user: users[req.session.userID],
   };
   if (!templateVars.user) {
-    templateVars.errorMessage = "Error - You must log in to view this page";
-    return res.render("error", templateVars);
+    const errorMessage = "Error - You must log in to view this page";
+    return res.render("error", { errorMessage });
   }
   res.render("urls_index", templateVars);
 });
@@ -78,12 +78,20 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  if (!urlDatabase[req.params.shortURL]) {
+    const errorMessage = "Error - Page not found";
+    return res.render("error", { errorMessage });
+  }
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL].longURL,
     urlUserID: urlDatabase[req.params.shortURL].userID,
     user: users[req.session.userID]
   };
+  if (!templateVars.user) {
+    const errorMessage = "Error - Log in to view your urls";
+    return res.render("error", { errorMessage });
+  }
   if (urlDatabase[req.params.shortURL].userID !== req.session.userID) {
     const errorMessage = "Error - Unauthorized";
     return res.render("error", { errorMessage });
